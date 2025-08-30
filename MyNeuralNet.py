@@ -101,6 +101,7 @@ class NeuralNet:
 
         return dA_prev, dW, db
 
+    # Calculate gradients for parameters and previous activation for each layer.
     def activation_backward(self, dA, cache, activation):
         linear_cache, activation_cache = cache         # Gives ((A_prev, W, b), Z)
         Z = activation_cache                           # Gives the second element in the tuple Z
@@ -114,6 +115,7 @@ class NeuralNet:
 
         return dA_prev, dW, db
 
+    # Define backward propagation
     def backward_propagation(self, AL, Y, caches):
         L = len(caches)
         grads = {}
