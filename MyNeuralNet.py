@@ -1,19 +1,20 @@
 import numpy as np
-import copy
 
 # Neural network class
 class NeuralNet:
 
-    # initialize NN with it's predetermined structure, layer_dims.
+    # initialize the NN predetermined structure and it's weights and biases.
     def __init__(self, layer_dims):
         self.parameters = self._initialize_parameters(layer_dims)
 
     # initialize w and b parameters for all L layers.
     def _initialize_parameters(self, layer_dims):
 
+        # The length of this array is equal to the number of layers in the NN.
         L = len(layer_dims)
         parameters = {}
 
+        # instantiate weights and biases.
         for l in range(1, L):
             parameters[f"W{l}"] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.01
             parameters[f"b{l}"] = np.zeros((layer_dims[l], 1))
@@ -66,20 +67,27 @@ class NeuralNet:
         return A, cache
 
     # Perform forward propagation
-    def forward_propagation(self, X, parameters):
-        L = len(parameters) // 2         # Extract number of layers.
+    def forward_propagation(self, X):
+        L = len(self.parameters) // 2         # Extract number of layers.
         A_prev = X                       # Initial activations are the inputs
         caches = []                      # Need to collect caches of all layers. cache[0] is the ((A_prev, W, b), Z)
                                          # of the first layer, cache[1] is the ((A_prev, W, b), Z) of the second and so on.
         for l in range(1, L):
-            A_prev, cache  = self.activation_forward(A_prev, parameters[f"W{l}"], parameters[f"b{l}"], activation="relu")
+            A_prev, cache  = self.activation_forward(A_prev,
+                                                     self.parameters[f"W{l}"],
+                                                     self.parameters[f"b{l}"],
+                                                     activation="relu")
+
             caches.append(cache)         # Appends ((A_prev, W, b), Z) for each layer except the last.
 
         # calculate y_hat (AL) and collect the final cache ((A_prev, w, b), Z) for the last layer
-        AL, final_cache = self.activation_forward(A_prev, parameters[f"W{L}"], parameters[F"b{L}"], activation="sigmoid")
+        AL, final_cache = self.activation_forward(A_prev,
+                                                  self.parameters[f"W{L}"],
+                                                  self.parameters[f"b{L}"],
+                                                  activation="sigmoid")
         caches.append(final_cache)
 
-        return AL, caches   # Returns the prediction, AL,  and ((A_prev, W, b), Z) for all layers.
+        return AL, caches   # Returns the predictions, AL,  and ((A_prev, W, b), Z) for all layers.
 
     # Compute the cost of the prediction from forward propagation.
     def compute_cost(self, AL, Y):
@@ -139,14 +147,21 @@ class NeuralNet:
         return grads
 
     # Update each parameter once.
-    def update_parameters(self, params, grads, learning_rate):
-        parameters = copy.deepcopy(params)
-        L = len(parameters) // 2  # number of layers in the neural network
+    def update_parameters(self, grads, learning_rate):
+        L = len(self.parameters) // 2  # number of layers in the neural network
 
         # Iterate through each layer and update the parameters once.
         for l in range(1, L + 1):
-            parameters[f"W{l}"] = parameters[f"W{l}"] - (learning_rate * grads[f"dW{l}"])
-            parameters[f"b{l}"] = parameters[f"b{l}"] - (learning_rate * grads[f"db{l}"])
+            self.parameters[f"W{l}"] = self.parameters[f"W{l}"] - (learning_rate * grads[f"dW{l}"])
+            self.parameters[f"b{l}"] = self.parameters[f"b{l}"] - (learning_rate * grads[f"db{l}"])
 
-        return parameters
+    # Use to make predictions once model is trained.
+    def predict(self, X):
+        # Calculate probabilities using trained parameters
+        AL, _ = self.forward_propagation(X)
+
+        # Create boolean mask, then convert to 0's and 1's using * 1
+        predictions = (AL > 0.5) * 1
+
+        return predictions
 
