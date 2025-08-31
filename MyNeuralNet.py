@@ -14,9 +14,12 @@ class NeuralNet:
         L = len(layer_dims)
         parameters = {}
 
-        # instantiate weights and biases.
+        # instantiate the weights with He initialization since we are using the ReLu activation
+        # function primarily in our layers. This ensures each layer has the same variance,
+        # reducing vanishing or exploding gradients for deeper NNs.
         for l in range(1, L):
-            parameters[f"W{l}"] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.01
+            fan_in = layer_dims[l - 1]
+            parameters[f"W{l}"] = np.random.randn(layer_dims[l], fan_in) * np.sqrt(2 / fan_in)
             parameters[f"b{l}"] = np.zeros((layer_dims[l], 1))
 
         return parameters
