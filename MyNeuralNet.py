@@ -94,11 +94,36 @@ class NeuralNet:
 
     # Compute the cost of the prediction from forward propagation.
     def compute_cost(self, AL, Y):
+        # Extract number of data points
         m = Y.shape[1]
+
+        # Compute cross entropy loss
         cost = -(1/m) * np.sum((Y * np.log(AL) + (1 - Y) * np.log(1 - AL)))
 
-        cost = np.squeeze(cost)   # To ensure we get what we expect. (e.g., [[17]] becomes 17)
+        # To ensure we get what we expect. (e.g., [[17]] becomes 17)
+        cost = np.squeeze(cost)
         return cost
+
+    # Compute the cost of the prediction from forward propagation with the regularization term included.
+    def compute_cost_reg(self, AL, Y, lamda):
+        m = Y.shape[1]              # Extract number of data points
+        sum_of_squared_weights = 0  # initialize the sum of squares
+        L = len(self.parameters) // 2   # Extract number of layers.
+
+        # Compute cross entropy loss
+        cross_entropy_cost = -(1 / m) * np.sum((Y * np.log(AL) + (1 - Y) * np.log(1 - AL)))
+
+        # For all weights in layer 1 to layer L
+        for l in range(1, L + 1):
+            W = self.parameters["W" + str(l)]               # Extract every weight matrix
+            sum_of_squared_weights += np.sum(np.square(W))  # Square each term and sum their values.
+
+        # Compute L2 cost
+        L2_regularization_cost = (lamda / (2 * m)) * sum_of_squared_weights
+
+        # Combine cross entropy loss and L2 cost to get the final cost function.
+        cost = cross_entropy_cost + L2_regularization_cost
+        return np.squeeze(cost)
 
     # Suppose we have calculated dZ for layer l. We want to return dW, dB and DA_prev
     def linear_backward(self, dZ, cache):
@@ -112,40 +137,55 @@ class NeuralNet:
 
         return dA_prev, dW, db
 
+    # Performs the same operation as linear_backward, except w.r.t the regularized cost function.
+    def linear_backward_reg(self, dZ, cache, lamda):
+        A_prev, W, b = cache
+        m = A_prev.shape[1]         # Since the columns of any activation matrix will be (n^{[l]}, m)
+
+        # We can calculate dW, db and dA_prev for layer l using dZ from layer l
+        dW =(1/m) * np.dot(dZ, A_prev.T) + (lamda / m) * W
+        db = (1/m) * np.sum(dZ, axis=1, keepdims=True)
+        dA_prev = np.dot(W.T, dZ)
+
+        return dA_prev, dW, db
+
     # Calculate gradients for parameters and previous activation for each layer.
-    def activation_backward(self, dA, cache, activation):
+    def activation_backward(self, dA, cache, activation, lamda, reg=False):
         linear_cache, activation_cache = cache         # Gives ((A_prev, W, b), Z)
         Z = activation_cache                           # Gives the second element in the tuple Z
         if activation == "sigmoid":
             dZ = dA * self.sigmoid_backward(Z)
-            dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+            if reg:
+                dA_prev, dW, db = self.linear_backward_reg(dZ, linear_cache, lamda)
+            else:
+                dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
 
         elif activation == "relu":
             dZ = dA * self.relu_backward(Z)
-            dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+            if reg:
+                dA_prev, dW, db = self.linear_backward_reg(dZ, linear_cache, lamda)
+            else:
+                dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
 
         return dA_prev, dW, db
 
     # Define backward propagation
-    def backward_propagation(self, AL, Y, caches):
+    def backward_propagation(self, AL, Y, caches, lamda=0, reg=False):
         L = len(caches)
         grads = {}
         m = AL.shape[1]
 
         # initialise coming backward through the computation graph
         dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
-        dA_prev, dW, db = self.activation_backward(dAL, caches[L - 1], "sigmoid")
-        grads[f"dA{L-1}"] = dA_prev
-        grads[f"dW{L}"] = dW
-        grads[f"db{L}"] = db
+
+        dA_prev, dW, db = self.activation_backward(dAL, caches[L - 1], "sigmoid", lamda, reg)
+        grads[f"dA{L-1}"], grads[f"dW{L}"], grads[f"db{L}"]  = dA_prev, dW, db
 
         # Iterate backward through the computation graph from layer L - 1, calculating the gradients on the way.
         for l in range(L - 1, 0, -1):
             cache = caches[l - 1]               # Start from (L - 1) - 1 = L - 2 (the L - 1 layer.)
-            dA_prev, dW, db = self.activation_backward(dA_prev, cache, "relu")
-            grads[f"dA{l - 1}"] = dA_prev
-            grads[f"dW{l}"] = dW
-            grads[f"db{l}"] = db
+            dA_prev, dW, db = self.activation_backward(dA_prev, cache, "relu", lamda, reg)
+            grads[f"dA{l - 1}"], grads[f"dW{l}"], grads[f"db{l}"] = dA_prev, dW, db
 
         return grads
 
