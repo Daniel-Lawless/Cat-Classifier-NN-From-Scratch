@@ -92,6 +92,35 @@ class NeuralNet:
 
         return AL, caches   # Returns the predictions, AL,  and ((A_prev, W, b), Z) for all layers.
 
+    # Function for implementing the forward pass using inverted dropout.
+    def forward_propagation_with_dropout(self, X, keep_prob=0.5):
+        L = len(self.parameters) // 2
+        caches = []
+        A_prev = X
+        for l in range(1, L):
+            W = self.parameters[f"W{l}"]
+            b = self.parameters[f"b{l}"]
+            A_prev, cache_activation = self.activation_forward(A_prev, W, b, "relu")
+
+            # Implement inverted dropout
+            D_mask = np.random.rand(A_prev.shape[0], A_prev.shape[1]) < keep_prob # Create mask
+            A_prev *= D_mask    # Apply the mask to A
+            A_prev /= keep_prob # Scale non-dropped neurons to maintain expected output value.
+
+            # Store in cache for back prop
+            cache = (cache_activation, D_mask)
+            caches.append(cache)
+
+        # No drop-out for last layer
+        W = self.parameters[f"W{L}"]
+        b = self.parameters[f"b{L}"]
+        AL, final_cache = self.activation_forward(A_prev, W, b, "sigmoid")
+
+        # Append final cache.
+        caches.append((final_cache, None))
+
+        return AL, caches # Returns the predictions, AL,  and (((A_prev, W, b), Z) D_mask) for all layers.
+
     # Compute the cost of the prediction from forward propagation.
     def compute_cost(self, AL, Y):
         # Extract number of data points
@@ -111,7 +140,7 @@ class NeuralNet:
         L = len(self.parameters) // 2   # Extract number of layers.
 
         # Compute cross entropy loss
-        cross_entropy_cost = -(1 / m) * np.sum((Y * np.log(AL) + (1 - Y) * np.log(1 - AL)))
+        cross_entropy_cost = self.compute_cost(AL, Y)
 
         # For all weights in layer 1 to layer L
         for l in range(1, L + 1):
@@ -173,20 +202,43 @@ class NeuralNet:
     def backward_propagation(self, AL, Y, caches, lamda=0, reg=False):
         L = len(caches)
         grads = {}
-        m = AL.shape[1]
 
-        # initialise coming backward through the computation graph
         dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
         dA_prev, dW, db = self.activation_backward(dAL, caches[L - 1], "sigmoid", lamda, reg)
-        grads[f"dA{L-1}"], grads[f"dW{L}"], grads[f"db{L}"]  = dA_prev, dW, db
+        grads[f"dW{L}"], grads[f"db{L}"]  = dW, db
 
         # Iterate backward through the computation graph from layer L - 1, calculating the gradients on the way.
         for l in range(L - 1, 0, -1):
             cache = caches[l - 1]               # Start from (L - 1) - 1 = L - 2 (the L - 1 layer.)
             dA_prev, dW, db = self.activation_backward(dA_prev, cache, "relu", lamda, reg)
-            grads[f"dA{l - 1}"], grads[f"dW{l}"], grads[f"db{l}"] = dA_prev, dW, db
+            grads[f"dW{l}"], grads[f"db{l}"] = dW, db
 
+        return grads
+
+    # Function to implement back prop with dropout.
+    def backward_propagation_with_dropout(self, AL, Y, caches, keep_prob, lamda=0, reg=False):
+        L = len(caches)
+        grads = {}
+
+        # initialise coming backward through the computation graph. We did not apply
+        # a mask to the last layer, therefore we do not have to apply it here.
+        dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+
+        final_layer_cache, _ = caches[L - 1]
+        dA_prev, dW, db = self.activation_backward(dAL, final_layer_cache, "sigmoid", lamda, reg)
+        grads[f"dW{L}"], grads[f"db{L}"]  = dW, db
+
+        # Iterate backward through the computation graph from layer L - 1, calculating the gradients on the way.
+        for l in range(L - 1, 0, -1):
+            current_cache, D_mask = caches[l - 1]  # Start from (L - 1) - 1 = L - 2 (the L - 1 layer.)
+
+            dA_prev *= D_mask # Shutdown same neurons as in the forward pass
+            dA_prev /= keep_prob # Scale non-dropped neurons to maintain expected output value.
+
+            dA_prev, dW, db = self.activation_backward(dA_prev, current_cache, "relu", lamda, reg)
+
+            grads[f"dW{l}"], grads[f"db{l}"] = dW, db
         return grads
 
     # Update each parameter once.
@@ -207,4 +259,3 @@ class NeuralNet:
         predictions = (AL > 0.5) * 1
 
         return predictions
-
