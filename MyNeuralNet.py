@@ -26,7 +26,7 @@ class NeuralNet:
         return parameters
 
     # Function to ensure predictions are not exactly 0 or 1
-    def sanitize_predictions(self, AL):
+    def _sanitize_predictions(self, AL):
         epsilon = 1e-8
         return np.clip(AL, epsilon, 1 - epsilon)
 
@@ -44,46 +44,46 @@ class NeuralNet:
         return v, s
 
     # Define the Sigmoid function
-    def sigmoid(self, Z):
+    def _sigmoid(self, Z):
         A = 1 / (1 + np.exp(-Z))
         return A, Z
 
     # Define the derivative of the sigmoid function
-    def sigmoid_backward(self, Z):
-        A, _ = self.sigmoid(Z)
+    def _sigmoid_backward(self, Z):
+        A, _ = self._sigmoid(Z)
         derivative = A * (1 - A)
         return derivative
 
     # Define the ReLu function.
-    def ReLu(self, Z):
+    def _ReLu(self, Z):
         A = np.maximum(0, Z)
         return A, Z
 
     # Define the derivative of the ReLu function
-    def relu_backward(self, Z):
+    def _relu_backward(self, Z):
         derivative = np.zeros_like(Z)   # Create vector same size as Z
         derivative[Z > 0] = 1           # If Z > 0, it's 1, 0 otherwise.
         return derivative
 
     # Define the linear portion of forward propagation.
-    def linear_forward(self, A_prev, W, b):
+    def _linear_forward(self, A_prev, W, b):
         Z = np.dot(W, A_prev) + b
 
         cache = (A_prev, W, b)
         return Z, cache
 
     # Define the activation portion of forward propagation.
-    def activation_forward(self, A_prev, W, b, activation):
+    def _activation_forward(self, A_prev, W, b, activation):
 
         # return sigmoid of Z and return the original value of Z
         if activation == "sigmoid":
-            Z, linear_cache = self.linear_forward(A_prev, W, b)
-            A, activation_cache = self.sigmoid(Z)
+            Z, linear_cache = self._linear_forward(A_prev, W, b)
+            A, activation_cache = self._sigmoid(Z)
 
         # return ReLu of Z and return the original value of Z
         elif activation == "relu":
-            Z, linear_cache = self.linear_forward(A_prev, W, b)
-            A, activation_cache = self.ReLu(Z)
+            Z, linear_cache = self._linear_forward(A_prev, W, b)
+            A, activation_cache = self._ReLu(Z)
 
         cache = (linear_cache, activation_cache)   # This cache contains ((A_prev, W, b), Z)
         return A, cache
@@ -95,7 +95,7 @@ class NeuralNet:
         caches = []                      # Need to collect caches of all layers. cache[0] is the ((A_prev, W, b), Z)
                                          # of the first layer, cache[1] is the ((A_prev, W, b), Z) of the second and so on.
         for l in range(1, L):
-            A_prev, cache  = self.activation_forward(A_prev,
+            A_prev, cache  = self._activation_forward(A_prev,
                                                      self.parameters[f"W{l}"],
                                                      self.parameters[f"b{l}"],
                                                      activation="relu")
@@ -103,7 +103,7 @@ class NeuralNet:
             caches.append(cache)         # Appends ((A_prev, W, b), Z) for each layer except the last.
 
         # calculate y_hat (AL) and collect the final cache ((A_prev, w, b), Z) for the last layer
-        AL, final_cache = self.activation_forward(A_prev,
+        AL, final_cache = self._activation_forward(A_prev,
                                                   self.parameters[f"W{L}"],
                                                   self.parameters[f"b{L}"],
                                                   activation="sigmoid")
@@ -119,7 +119,7 @@ class NeuralNet:
         for l in range(1, L):
             W = self.parameters[f"W{l}"]
             b = self.parameters[f"b{l}"]
-            A_prev, cache_activation = self.activation_forward(A_prev, W, b, "relu")
+            A_prev, cache_activation = self._activation_forward(A_prev, W, b, "relu")
 
             # Implement inverted dropout
             D_mask = np.random.rand(A_prev.shape[0], A_prev.shape[1]) < keep_prob # Create mask
@@ -133,7 +133,7 @@ class NeuralNet:
         # No drop-out for last layer
         W = self.parameters[f"W{L}"]
         b = self.parameters[f"b{L}"]
-        AL, final_cache = self.activation_forward(A_prev, W, b, "sigmoid")
+        AL, final_cache = self._activation_forward(A_prev, W, b, "sigmoid")
 
         # Append final cache.
         caches.append((final_cache, None))
@@ -146,7 +146,7 @@ class NeuralNet:
         m = Y.shape[1]
 
         # Ensure predictions are not exactly 0 or 1
-        safe_AL = self.sanitize_predictions(AL)
+        safe_AL = self._sanitize_predictions(AL)
 
         # Compute cross entropy loss
         cost = -(1/m) * np.sum((Y * np.log(safe_AL) + (1 - Y) * np.log(1 - safe_AL)))
@@ -177,7 +177,7 @@ class NeuralNet:
         return np.squeeze(cost)
 
     # Suppose we have calculated dZ for layer l. We want to return dW, dB and DA_prev
-    def linear_backward(self, dZ, cache):
+    def _linear_backward(self, dZ, cache):
         A_prev, W, b = cache
         m = A_prev.shape[1]          # Since the columns of any activation matrix will be (n^{[l]}, m)
 
@@ -189,7 +189,7 @@ class NeuralNet:
         return dA_prev, dW, db
 
     # Performs the same operation as linear_backward, except w.r.t the regularized cost function.
-    def linear_backward_reg(self, dZ, cache, lamda):
+    def _linear_backward_reg(self, dZ, cache, lamda):
         A_prev, W, b = cache
         m = A_prev.shape[1]         # Since the columns of any activation matrix will be (n^{[l]}, m)
 
@@ -201,22 +201,22 @@ class NeuralNet:
         return dA_prev, dW, db
 
     # Calculate gradients for parameters and previous activation for each layer.
-    def activation_backward(self, dA, cache, activation, lamda, reg=False):
+    def _activation_backward(self, dA, cache, activation, lamda, reg=False):
         linear_cache, activation_cache = cache         # Gives ((A_prev, W, b), Z)
         Z = activation_cache                           # Gives the second element in the tuple Z
         if activation == "sigmoid":
-            dZ = dA * self.sigmoid_backward(Z)
+            dZ = dA * self._sigmoid_backward(Z)
             if reg:
-                dA_prev, dW, db = self.linear_backward_reg(dZ, linear_cache, lamda)
+                dA_prev, dW, db = self._linear_backward_reg(dZ, linear_cache, lamda)
             else:
-                dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+                dA_prev, dW, db = self._linear_backward(dZ, linear_cache)
 
         elif activation == "relu":
-            dZ = dA * self.relu_backward(Z)
+            dZ = dA * self._relu_backward(Z)
             if reg:
-                dA_prev, dW, db = self.linear_backward_reg(dZ, linear_cache, lamda)
+                dA_prev, dW, db = self._linear_backward_reg(dZ, linear_cache, lamda)
             else:
-                dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+                dA_prev, dW, db = self._linear_backward(dZ, linear_cache)
 
         return dA_prev, dW, db
 
@@ -226,18 +226,18 @@ class NeuralNet:
         grads = {}
 
         # Ensure predictions are not exactly 0 or 1
-        safe_AL = self.sanitize_predictions(AL)
+        safe_AL = self._sanitize_predictions(AL)
 
         # Calculate the derivative of A w.r.t. the loss for the final layer.
         dAL = - (np.divide(Y, safe_AL) - np.divide(1 - Y, 1 - safe_AL))
 
-        dA_prev, dW, db = self.activation_backward(dAL, caches[L - 1], "sigmoid", lamda, reg)
+        dA_prev, dW, db = self._activation_backward(dAL, caches[L - 1], "sigmoid", lamda, reg)
         grads[f"dW{L}"], grads[f"db{L}"]  = dW, db
 
         # Iterate backward through the computation graph from layer L - 1, calculating the gradients on the way.
         for l in range(L - 1, 0, -1):
             cache = caches[l - 1]               # Start from (L - 1) - 1 = L - 2 (the L - 1 layer.)
-            dA_prev, dW, db = self.activation_backward(dA_prev, cache, "relu", lamda, reg)
+            dA_prev, dW, db = self._activation_backward(dA_prev, cache, "relu", lamda, reg)
             grads[f"dW{l}"], grads[f"db{l}"] = dW, db
 
         return grads
@@ -248,14 +248,14 @@ class NeuralNet:
         grads = {}
 
         # Ensure predictions are not exactly 0 or 1
-        safe_AL = self.sanitize_predictions(AL)
+        safe_AL = self._sanitize_predictions(AL)
 
         # initialise coming backward through the computation graph. We did not apply
         # a mask to the last layer, therefore we do not have to apply it here.
         dAL = - (np.divide(Y, safe_AL) - np.divide(1 - Y, 1 - safe_AL))
 
         final_layer_cache, _ = caches[L - 1]
-        dA_prev, dW, db = self.activation_backward(dAL, final_layer_cache, "sigmoid", lamda, reg)
+        dA_prev, dW, db = self._activation_backward(dAL, final_layer_cache, "sigmoid", lamda, reg)
         grads[f"dW{L}"], grads[f"db{L}"]  = dW, db
 
         # Iterate backward through the computation graph from layer L - 1, calculating the gradients on the way.
@@ -265,7 +265,7 @@ class NeuralNet:
             dA_prev *= D_mask # Shutdown same neurons as in the forward pass
             dA_prev /= keep_prob # Scale non-dropped neurons to maintain expected output value.
 
-            dA_prev, dW, db = self.activation_backward(dA_prev, current_cache, "relu", lamda, reg)
+            dA_prev, dW, db = self._activation_backward(dA_prev, current_cache, "relu", lamda, reg)
 
             grads[f"dW{l}"], grads[f"db{l}"] = dW, db
         return grads
