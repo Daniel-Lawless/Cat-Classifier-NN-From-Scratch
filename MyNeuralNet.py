@@ -6,6 +6,7 @@ class NeuralNet:
     # initialize the NN predetermined structure and it's weights and biases.
     def __init__(self, layer_dims):
         self.parameters = self._initialize_parameters(layer_dims)
+        self.v, self.s = self._initialize_parameters_adam()
 
     # initialize w and b parameters for all L layers.
     def _initialize_parameters(self, layer_dims):
@@ -23,6 +24,24 @@ class NeuralNet:
             parameters[f"b{l}"] = np.zeros((layer_dims[l], 1))
 
         return parameters
+
+    # Function to ensure predictions are not exactly 0 or 1
+    def sanitize_predictions(self, AL):
+        epsilon = 1e-8
+        return np.clip(AL, epsilon, 1 - epsilon)
+
+    # Function to initialize the weighted averages for the gradients of w and b
+    def _initialize_parameters_adam(self):
+        L = len(self.parameters) // 2
+        v = {}
+        s = {}
+        for l in range(1, L + 1):
+            v[f"dW{l}"] = np.zeros_like(self.parameters[f"W{l}"])
+            v[f"db{l}"] = np.zeros_like(self.parameters[f"b{l}"])
+            s[f"dW{l}"] = np.zeros_like(self.parameters[f"W{l}"])
+            s[f"db{l}"] = np.zeros_like(self.parameters[f"b{l}"])
+
+        return v, s
 
     # Define the Sigmoid function
     def sigmoid(self, Z):
@@ -126,8 +145,11 @@ class NeuralNet:
         # Extract number of data points
         m = Y.shape[1]
 
+        # Ensure predictions are not exactly 0 or 1
+        safe_AL = self.sanitize_predictions(AL)
+
         # Compute cross entropy loss
-        cost = -(1/m) * np.sum((Y * np.log(AL) + (1 - Y) * np.log(1 - AL)))
+        cost = -(1/m) * np.sum((Y * np.log(safe_AL) + (1 - Y) * np.log(1 - safe_AL)))
 
         # To ensure we get what we expect. (e.g., [[17]] becomes 17)
         cost = np.squeeze(cost)
@@ -203,7 +225,11 @@ class NeuralNet:
         L = len(caches)
         grads = {}
 
-        dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+        # Ensure predictions are not exactly 0 or 1
+        safe_AL = self.sanitize_predictions(AL)
+
+        # Calculate the derivative of A w.r.t. the loss for the final layer.
+        dAL = - (np.divide(Y, safe_AL) - np.divide(1 - Y, 1 - safe_AL))
 
         dA_prev, dW, db = self.activation_backward(dAL, caches[L - 1], "sigmoid", lamda, reg)
         grads[f"dW{L}"], grads[f"db{L}"]  = dW, db
@@ -221,9 +247,12 @@ class NeuralNet:
         L = len(caches)
         grads = {}
 
+        # Ensure predictions are not exactly 0 or 1
+        safe_AL = self.sanitize_predictions(AL)
+
         # initialise coming backward through the computation graph. We did not apply
         # a mask to the last layer, therefore we do not have to apply it here.
-        dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+        dAL = - (np.divide(Y, safe_AL) - np.divide(1 - Y, 1 - safe_AL))
 
         final_layer_cache, _ = caches[L - 1]
         dA_prev, dW, db = self.activation_backward(dAL, final_layer_cache, "sigmoid", lamda, reg)
@@ -249,6 +278,37 @@ class NeuralNet:
         for l in range(1, L + 1):
             self.parameters[f"W{l}"] = self.parameters[f"W{l}"] - (learning_rate * grads[f"dW{l}"])
             self.parameters[f"b{l}"] = self.parameters[f"b{l}"] - (learning_rate * grads[f"db{l}"])
+
+    # Function to update parameters using the Adam optimizer.
+    def update_parameters_adam(self, grads, learning_rate, t, beta_1=0.9, beta_2=0.999, epsilon=1e-8):
+        L = len(self.parameters) // 2  # Extract number of layers
+        v_corrected = {}
+        s_corrected = {}
+
+        # Update weight and bias for each layer.
+        for l in range(1, L + 1):
+            dW = grads[f"dW{l}"]
+            db = grads[f"db{l}"]
+
+            # Track the exponentially weighted averages of the gradients for w and b
+            self.v[f"dW{l}"] = beta_1 * self.v[f"dW{l}"] + (1 - beta_1) * dW
+            self.v[f"db{l}"] = beta_1 * self.v[f"db{l}"] + (1 - beta_1) * db
+
+            # Track the exponentially weighted averages of the square gradients for w and b
+            self.s[f"dW{l}"] = beta_2 * self.s[f"dW{l}"] + (1 - beta_2) * (dW ** 2)
+            self.s[f"db{l}"] = beta_2 * self.s[f"db{l}"] + (1 - beta_2) * (db ** 2)
+
+            # Bias correction
+            v_corrected[f"dW{l}"] = self.v[f"dW{l}"] / (1 - beta_1 ** t)
+            v_corrected[f"db{l}"] = self.v[f"db{l}"] / (1 - beta_1 ** t)
+            s_corrected[f"dW{l}"] = self.s[f"dW{l}"] / (1 - beta_2 ** t)
+            s_corrected[f"db{l}"] = self.s[f"db{l}"] / (1 - beta_2 ** t)
+
+            # Update parameters
+            self.parameters[f"W{l}"] -= learning_rate * (
+                        v_corrected[f"dW{l}"] / (np.sqrt(s_corrected[f"dW{l}"]) + epsilon))
+            self.parameters[f"b{l}"] -= learning_rate * (
+                        v_corrected[f"db{l}"] / (np.sqrt(s_corrected[f"db{l}"]) + epsilon))
 
     # Use to make predictions once model is trained.
     def predict(self, X):
