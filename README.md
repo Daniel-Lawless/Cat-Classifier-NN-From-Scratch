@@ -33,7 +33,7 @@ the linear functions (Z values) by giving it the flexibility to control the spre
 and the mean ($\beta$) of the z values, allowing for more stable and faster learning.
 
 # Technical overview
-Here is a brief view at how some of the core concepts where implemented. The full
+Here is a brief view of how some of the core concepts where implemented. The full
 implementation of these components can be found in `neural_network.py` & 
 `neural_net_optimized.py`. 
 
@@ -83,10 +83,40 @@ prop to ensure the gradients only flow through the active neurons.
 
 - **L2 regularization:** By adding a penalty term to the cost function whose magnitude
 depends on the size of the weights and the value of lambda, this penalises the model if the 
-weights are too large, thus reducing overfitting. The following cost function was used in
-my implementation where $A^{[L]}$ is the final prediction of the model.
+weights are too large, thus reducing overfitting. This required an additional term, $\frac{\lambda}{m}W, $to be added
+when calculating the derivative of the loss w.r.t. W, $\frac{dL}{dW}$, during back propagation. The following cost function was used in
+my implementation where $A^{[L]}$ are the final predictions of the model.
 ```math
 $$J = \underbrace{-\frac{1}{m}\sum^{m}_{i = 1} \left[ Y^{[i]}log(A^{[L]}) + (1 - Y^{[i]})log(1 - A^{[L]})\right] }_{\text{Cross-entropy loss}} + 
  \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}\vert \vert W^{[l]}\vert \vert ^{2}_{f}}_{\text{L2 Regularization}} $$
 ```
+
 ***
+
+- **Batch-norm:** Batch norm allows the model to modify the distribution of the Z values during 
+forward propagation. We give the model this flexibility by introducing two new learnable
+parameters $\gamma$ & $\beta$. We perform batch norm by doing the following:
+```math
+$$
+\begin{align}
+Z^{[l]} &= W^{[l]}A^{[l - 1]}\hspace{3cm} (\text{Perform linear calculation})\\ \\
+Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{2} + \epsilon}} \hspace{3cm} 
+                        (\text{Normalize Z})\\ \\
+\tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} \hspace{2.2cm} 
+                  (\text{Apply parameters } \gamma \text{ & } \beta)\\ \\
+\end{align}
+$$
+```
+
+This also allows us to cancel out parameter $b$, since for
+the linear calculation $Z^{[l]} = W^{[l]}A^{[l -1]} + b^{[l]}$ the mean of this becomes
+$E[Z^{[l]}] = E[W^{[l]}A^{[l -1]} + b^{[l]}] = E[W^{[l]}A^{[l -1]}] + b^{[l]}$ and during
+normalization we subtract the mean from $Z^{[l]}$, leaving us with
+$Z^{[l]} - \mu^{[l]} = W^{[l]}A^{[l -1]} + b^{[l]} - (E[W^{[l]}A^{[l -1]}] + b^{[l]}) = 
+W^{[l]}A^{[l -1]} - E[W^{[l]}A^{[l -1]}],$ cancelling the b term. Now, we only have to
+update parameters W, $\gamma$, & $\beta$.
+
+# How to Run
+
+
+# Key Learnings & Challenges
