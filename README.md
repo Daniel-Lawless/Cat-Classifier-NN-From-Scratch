@@ -34,9 +34,10 @@ and the mean ($\beta$) of the z values, allowing for more stable and faster lear
 
 # Technical overview
 Here is a brief view at how some of the core concepts where implemented. The full
-implementation of these components can be found in 'neural_network.py' & 
-'neural_net_optimized.py'. 
+implementation of these components can be found in `neural_network.py` & 
+`neural_net_optimized.py`. 
 
+***
 **Optimization Algorithms:**
 
 The Adam optimizer was built by first implementing its inner
@@ -86,6 +87,6 @@ weights are too large, thus reducing overfitting. The following cost function wa
 my implementation where $A^{[L]}$ is the final prediction of the model.
 ```math
 $$J = \underbrace{-\frac{1}{m}\sum^{m}_{i = 1} \left[ Y^{[i]}log(A^{[L]}) + (1 - Y^{[i]})log(1 - A^{[L]})\right] }_{\text{Cross-entropy loss}} + 
- \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}||W^{[l]}||^{2}_{f}}_{\text{L2 Regularization}} $$
+ \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}\vert \vert W^{[l]}\vert \vert ^{2}_{f}}_{\text{L2 Regularization}} $$
 ```
 ***
