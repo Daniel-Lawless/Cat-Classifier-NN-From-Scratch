@@ -45,30 +45,41 @@ components. Let's work with parameter W.
 - **Momentum**: The velocity is the exponentially weighted average of the gradients of W. 
 for parameter W in layer l, $v_{dW^{[l]}}$, is calculated as:
 
+```math
 $$v_{dW^{[l]}} = \Phi_{1} v_{dW^{[l]}} + (1 - \Phi_{1})dW^{[l]} $$
+```
 
 - **RMSprop**: This calculates the exponentially weighted average of the square of the gradients for 
 W. For parameter W in layer l, $s_{dW^{[l]}}$ is calculated as:
-$$ s_{dW^{[l]}} = \Phi_{2}s_{dW^{[l]}} + (1 - \Phi)dW^{[l]^{2}} $$
+
+```math
+s_{dW^{[l]}} = \Phi_2 s_{dW^{[l]}} + (1 - \Phi_2) (dW^{[l]})^2
+```
 
 - **Bias correction:** Both terms are then scaled using bias correction, to ensure initial values
 are not too small:
+
+``` math
 $$v^{corr}_{dW^{[l]}} = \frac{v_{dW^{[l]}}}{1 - \Phi_{1}^{t}}\hspace{1cm}, \hspace{1cm}  s^{corr}_{dW^{[l]}} 
 = \frac{s_{dW^{[l]}}}{1 - \Phi_{2}^{t}} $$
+```
 
 - **Adam:** We then combines these terms to update the parameters, including an $\epsilon$ term
 for numerical stability, to provide the best of both worlds:
-$$W = W - \alpha \frac{v^{corr}_{dW^{[l]}}}{\sqrt{s_{dW^{[l]}}^{corr} + \epsilon}}$$
 
+``` math
+$$W = W - \alpha \frac{v^{corr}_{dW^{[l]}}}{\sqrt{s_{dW^{[l]}}^{corr} + \epsilon}}$$
+```
+***
 **Regularization algorithms:** 
 To improve generalization to unseen data, regularization was added.
-***
+
 - **Drop-out:** I implemented drop out by creating a mask D for each hidden layer. This mask was 
 applied to each activation A (excluding the last layer), effectively shutting
 down some neurons. An important implementation step is ensuring the mask applied
 to layer l during forward prop is the same mask applied to layer l during back
 prop to ensure the gradients only flow through the active neurons.
-***
+
 - **L2 regularization:** By adding a penalty term to the cost function whose magnitude
 depends on the size of the weights and the value of lambda, this penalises the model if the 
 weights are too large, thus reducing overfitting. The following cost function was used in
@@ -77,3 +88,4 @@ my implementation where $A^{[L]}$ is the final prediction of the model.
 $$J = \underbrace{-\frac{1}{m}\sum^{m}_{i = 1} \left[ Y^{[i]}log(A^{[L]}) + (1 - Y^{[i]})log(1 - A^{[L]})\right] }_{\text{Cross-entropy loss}} + 
  \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}||W^{[l]}||^{2}_{f}}_{\text{L2 Regularization}} $$
 ```
+***
