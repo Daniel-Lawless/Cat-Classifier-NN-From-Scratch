@@ -8,7 +8,8 @@ modern deep learning frameworks like Tensorflow and Keras from scratch using onl
 to give a much deeper intuition into the math that powers these models.
 
 I made a series of models, each composing of different optimization algorithms, 
-regularization,and training processes and compared how they did on my particular data.
+regularization, and training processes to compare how they would perform on my particular
+data.
 
  # Key features implemented
 L-layer architecture: The model is generalised to handle any number of layers with any
