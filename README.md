@@ -69,7 +69,7 @@ $$v^{corr}_{dW^{[l]}} = \frac{v_{dW^{[l]}}}{1 - \Phi_{1}^{t}}\hspace{1cm}, \hspa
 for numerical stability, to provide the best of both worlds:
 
 ``` math
-$$W = W - \alpha \frac{v^{corr}_{dW^{[l]}}}{\sqrt{s_{dW^{[l]}}^{corr} + \epsilon}}$$
+$$W^{[l]} = W^{[l]} - \alpha \frac{v^{\text{corr}}_{dW^{[l]}}}{\sqrt{S^{\text{corr}}_{dW^{[l]}} + \epsilon}}$$
 ```
 ***
 **Regularization algorithms:** 
