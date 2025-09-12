@@ -49,6 +49,7 @@ for parameter W in layer l, $v_{dW^{[l]}}$, is calculated as:
 ```math
 $$v_{dW^{[l]}} = \Phi_{1} v_{dW^{[l]}} + (1 - \Phi_{1})dW^{[l]} $$
 ```
+<br><br>
 
 - **RMSprop**: This calculates the exponentially weighted average of the square of the gradients for 
 W. For parameter W in layer l, $s_{dW^{[l]}}$ is calculated as:
@@ -101,6 +102,8 @@ parameters $\gamma$ & $\beta$. We perform batch norm by doing the following:
 $$
 \begin{align}
 Z^{[l]} &= W^{[l]}A^{[l - 1]} && (\text{Perform linear calculation})\\ \\
+\mu^{[l]} &= \frac{1}{m}\sum_{i=1}^{m} Z^{[l](i)} \\
+\sigma^2^{[l]} &= \frac{1}{m}\sum_{i=1}^{m} (Z^{[l](i)} - \mu)^2
 Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{[l]^{2}} + \epsilon}} && 
                         (\text{Normalize Z})\\ \\
 \tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} &&
@@ -109,15 +112,26 @@ Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{[l]^{2}} + \ep
 $$
 ```
 
-This also allows us to cancel out parameter $b$, since for
-the linear calculation $Z^{[l]} = W^{[l]}A^{[l -1]} + b^{[l]}$ the mean of this becomes
-$E[Z^{[l]}] = E[W^{[l]}A^{[l -1]} + b^{[l]}] = E[W^{[l]}A^{[l -1]}] + b^{[l]}$ and during
-normalization we subtract the mean from $Z^{[l]}$, leaving us with
-$Z^{[l]} - \mu^{[l]} = W^{[l]}A^{[l -1]} + b^{[l]} - (E[W^{[l]}A^{[l -1]}] + b^{[l]}) = 
-W^{[l]}A^{[l -1]} - E[W^{[l]}A^{[l -1]}],$ cancelling the b term. Now, we only have to
-update parameters W, $\gamma$, & $\beta$.
+This also allows us to cancel out parameter $b$, since during normalization, 
+we subtract $\mu^{[l]}$ from $Z^{[l]}$, giving:
+
+$$
+\begin{align}
+Z^{[l]} &= W^{[l]}A^{[l -1]} + b^{[l]} \\ \\
+\mu^{[l]} &= E[W^{[l]}A^{[l -1]} + b^{[l]}] \\ \\
+&= E[W^{[l]}A^{[l -1]}] + b^{[l]}  \\ \\
+Z^{[l]} - \mu^{[l]} &= W^{[l]}A^{[l -1]} + b^{[l]} - E[W^{[l]}A^{[l -1]}] + b^{[l]} \\ \\
+&= W^{[l]}A^{[l -1]} - E[W^{[l]}A^{[l -1]}]
+\end{align}
+$$
+
+Thus cancelling the b term. Now, we only have to update parameters W, $\gamma$, & $\beta$.
+The primary benefit of batch-norm is it helps combat covariate-shift. This describes the
+changing distributions of network activations during training, which can lead to bad
+generalization, batch-norm helps to stabilize these distributions, leading to faster,
+more stable training and can have a regularizing effect.
+
 
 # How to Run
-
 
 # Key Learnings & Challenges
