@@ -57,6 +57,7 @@ W. For parameter W in layer l, $s_{dW^{[l]}}$ is calculated as:
 ```math
 s_{dW^{[l]}} = \Phi_2 s_{dW^{[l]}} + (1 - \Phi_2) (dW^{[l]})^2
 ```
+<br>
 
 - **Bias correction:** Both terms are then scaled using bias correction, to ensure initial values
 are not too small:
@@ -65,6 +66,7 @@ are not too small:
 $$v^{corr}_{dW^{[l]}} = \frac{v_{dW^{[l]}}}{1 - \Phi_{1}^{t}}\hspace{1cm}, \hspace{1cm}  s^{corr}_{dW^{[l]}} 
 = \frac{s_{dW^{[l]}}}{1 - \Phi_{2}^{t}} $$
 ```
+<br>
 
 - **Adam:** We then combines these terms to update the parameters, including an $\epsilon$ term
 for numerical stability, to provide the best of both worlds:
