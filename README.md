@@ -99,10 +99,10 @@ parameters $\gamma$ & $\beta$. We perform batch norm by doing the following:
 ```math
 $$
 \begin{align}
-Z^{[l]} &= W^{[l]}A^{[l - 1]}\hspace{3cm} (\text{Perform linear calculation})\\ \\
-Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{2} + \epsilon}} \hspace{3cm} 
+Z^{[l]} &= W^{[l]}A^{[l - 1]} && (\text{Perform linear calculation})\\ \\
+Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{l^{2}} + \epsilon}} && 
                         (\text{Normalize Z})\\ \\
-\tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} \hspace{2.2cm} 
+\tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} &&
                   (\text{Apply parameters } \gamma \text{ \& } \beta)\\ \\
 \end{align}
 $$
