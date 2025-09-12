@@ -83,9 +83,10 @@ prop to ensure the gradients only flow through the active neurons.
 
 - **L2 regularization:** By adding a penalty term to the cost function whose magnitude
 depends on the size of the weights and the value of lambda, this penalises the model if the 
-weights are too large, thus reducing overfitting. This required an additional term, $\frac{\lambda}{m}W, $to be added
+weights are too large, thus reducing overfitting. This required an additional term, $\frac{\lambda}{m}W$, to be added
 when calculating the derivative of the loss w.r.t. W, $\frac{dL}{dW}$, during back propagation. The following cost function was used in
 my implementation where $A^{[L]}$ are the final predictions of the model.
+
 ```math
 $$J = \underbrace{-\frac{1}{m}\sum^{m}_{i = 1} \left[ Y^{[i]}log(A^{[L]}) + (1 - Y^{[i]})log(1 - A^{[L]})\right] }_{\text{Cross-entropy loss}} + 
  \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}\vert \vert W^{[l]}\vert \vert ^{2}_{f}}_{\text{L2 Regularization}} $$
