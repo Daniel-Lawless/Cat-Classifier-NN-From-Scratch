@@ -11,7 +11,7 @@ I made a series of models, each composing of different optimization algorithms,
 regularization, and training processes to compare how they would perform on my particular
 data.
 
- # Key features implemented
+# Key features implemented
 L-layer architecture: The model is generalised to handle any number of layers with any
 number of neurons per layer. It is designed to use the RuLe activation function from the 
 first layer up to layer L - 1, with the sigmoid function being the activation function of 
@@ -25,9 +25,18 @@ growing to large and dropout regularization to randomly deactivate neurons to en
 output from one neural doesn't have too much precedence.
 
 Advanced optimization Techniques: I incorporated Adam, which combines the affects of momentum
-and RMSprop to push gradients in the right direction and adapt the learning rate for each parameter 
-,which allowed for more efficient training.
+and RMSprop to push gradients in the right direction and adapt the learning rate for each parameter,
+which allowed for more efficient training.
 
 Batch-normalization: enables the NN to have direct control over the distribution of
 the linear functions (Z values) by giving it the flexibility to control the spread ($\gamma$)
 and the mean ($\beta$) of the z values, allowing for more stable and faster learning.
+
+# Technical overview
+Here is a brief view at how some of the core concepts where implemented. The full
+implementation of these components can be found in 'neural_network.py' & 
+'neural_net_optimized.py'. The Adam optimizer was built by first implementing its inner
+components
+
+- Momentum the velocity, $v_{dW^{[l]}}, v_{d\beta}, v_{d\gamma}$ is calculated as an exponentially weighted average of
+the gradients of each parameter$$v_{dW} = \Phi_{1} v_{dW} + (1 - \Phi_{1})dW$$
