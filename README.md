@@ -49,7 +49,7 @@ for parameter W in layer l, $v_{dW^{[l]}}$, is calculated as:
 ```math
 $$v_{dW^{[l]}} = \Phi_{1} v_{dW^{[l]}} + (1 - \Phi_{1})dW^{[l]} $$
 ```
-<br><br>
+<br>
 
 - **RMSprop**: This calculates the exponentially weighted average of the square of the gradients for 
 W. For parameter W in layer l, $s_{dW^{[l]}}$ is calculated as:
