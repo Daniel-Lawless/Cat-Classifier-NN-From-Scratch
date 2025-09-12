@@ -102,8 +102,9 @@ parameters $\gamma$ & $\beta$. We perform batch norm by doing the following:
 $$
 \begin{align}
 Z^{[l]} &= W^{[l]}A^{[l - 1]} && (\text{Perform linear calculation})\\ \\
-\mu^{[l]} &= \frac{1}{m}\sum_{i=1}^{m} Z^{[l](i)} \\
+\mu^{[l]} &= \frac{1}{m}\sum_{i=1}^{m} Z^{[l](i)} && (\text{Calculate } \mu^{[l]})\\ \\
 \sigma^{[l]^{2}} &= \frac{1}{m}\sum_{i=1}^{m} (Z^{[l](i)} - \mu)^2
+                && (\text{Calculate } \sigma^{[l]^{2}}) \\ \\
 Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{[l]^{2}} + \epsilon}} && 
                         (\text{Normalize Z})\\ \\
 \tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} &&
