@@ -101,7 +101,7 @@ parameters $\gamma$ & $\beta$. We perform batch norm by doing the following:
 $$
 \begin{align}
 Z^{[l]} &= W^{[l]}A^{[l - 1]} && (\text{Perform linear calculation})\\ \\
-Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{l^{2}} + \epsilon}} && 
+Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{[l]^{2}} + \epsilon}} && 
                         (\text{Normalize Z})\\ \\
 \tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} &&
                   (\text{Apply parameters } \gamma \text{ \& } \beta)\\ \\
