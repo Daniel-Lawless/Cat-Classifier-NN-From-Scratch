@@ -103,7 +103,7 @@ Z^{[l]} &= W^{[l]}A^{[l - 1]}\hspace{3cm} (\text{Perform linear calculation})\\ 
 Z^{[l]}_{\text{norm}} &= \frac{Z^{[l]} - \mu^{[l]}}{\sqrt{\sigma^{2} + \epsilon}} \hspace{3cm} 
                         (\text{Normalize Z})\\ \\
 \tilde{Z}^{[l]} &= \gamma^{[l]} Z^{[l]}_{\text{norm}} + \beta^{[l]} \hspace{2.2cm} 
-                  (\text{Apply parameters } \gamma \text{ & } \beta)\\ \\
+                  (\text{Apply parameters } \gamma \text{ \& } \beta)\\ \\
 \end{align}
 $$
 ```
