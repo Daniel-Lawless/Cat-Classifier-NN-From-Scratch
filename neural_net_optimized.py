@@ -443,8 +443,9 @@ class NeuralNetOptimized:
 
         return predictions
 
+    # Function used to create mini-batches from training data.
     def create_mini_batches(self, X, Y, mini_batch_size, seed=0):
-        np.random.seed(seed)
+        np.random.seed(seed)    # Allows for reproducible results
         m = X.shape[1]          # Number of training examples.
         mini_batches = []
 
@@ -473,48 +474,3 @@ class NeuralNetOptimized:
         # We start from the last slice and take all rows up to the end of the columns, which would be column m - 1.
 
         return mini_batches
-
-        def neural_network_reg_adam_batch_norm(X, Y, layers_dims, lamda=0, keep_prob=1, beta_1=0.9, beta_2=0.999,
-                                               learning_rate=0.0075, num_epochs=50, print_cost=False, reg=False):
-
-            np.random.seed(1)  # Define np seed for reproducible results
-
-            NN = neural_net_optimized.NeuralNetOptimized(
-                layers_dims)  # Create NN instance, which initializes parameters.
-
-            costs = []  # Collection of costs for plotting
-
-            t = 0
-            # repeat forward prop, back prop, and gradient descent num_iterations times.
-            for i in range(num_epochs):
-                # Create mini_batches out of our X and Y datasets.
-                mini_batches = NN.create_mini_batches(X, Y, mini_batch_size=64)
-                epoch_cost = 0
-
-                # Iterate through each mini_batch
-                for mini_batch in mini_batches:
-                    mini_batch_X, mini_batch_Y = mini_batch
-
-                    t = t + 1
-                    # Extract prediction from forward prop and caches from each layer.
-                    AL, caches = NN.forward_propagation_with_dropout(mini_batch_X, keep_prob)
-
-                    # Use the prediction to compute the cost
-                    cost = NN.compute_cost_reg(AL, mini_batch_Y, lamda)
-
-                    # Perform back prop
-                    grads = NN.backward_propagation_with_dropout(AL, mini_batch_Y, caches, keep_prob, lamda, reg)
-
-                    # Update parameter using gradient descent.
-                    NN.update_parameters_adam(grads, learning_rate, t, beta_1, beta_2)
-
-                    epoch_cost += cost
-
-                # Print cost per 500 iterations if print_cost is true
-                if (i % 100 == 0 or i == num_epochs - 1) and print_cost == True:
-                    avg_cost = epoch_cost / len(mini_batches)
-                    print(f"Cost after epoch {i}: {avg_cost}")
-                    costs.append(avg_cost)
-
-            return costs, NN
-
