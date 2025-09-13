@@ -8,6 +8,7 @@ class NeuralNetOptimized:
     def __init__(self, layer_dims):
         self.parameters = self._initialize_parameters(layer_dims)
         self.v, self.s = self._initialize_weighted_averages_adam()
+        self.running_mu, self.running_var = self._initialize_weighted_averages_mu_var()
 
     # initialize w and b parameters for all L layers.
     def _initialize_parameters(self, layer_dims):
@@ -42,6 +43,17 @@ class NeuralNetOptimized:
             s[f"dgamma{l}"] = np.zeros_like(self.parameters[f"gamma{l}"])
 
         return v, s
+
+    # Function to initialize running averages for mean and variance.
+    def _initialize_weighted_averages_mu_var(self):
+        L = len(self.parameters) // 3
+        running_mu = {}
+        running_var = {}
+        for l in range(1, L + 1):
+            running_mu[f"mean{l}"] = np.zeros_like(self.parameters[f"beta{l}"])
+            running_var[f"var{l}"] = np.ones_like(self.parameters[f"beta{l}"])
+
+        return running_mu, running_var
 
     # Function to ensure predictions are not exactly 0 or 1
     def _sanitize_predictions(self, AL):
@@ -90,13 +102,25 @@ class NeuralNetOptimized:
         return Z, cache
 
     # Function used to implement back norm in the forward pass
-    def _batchnorm_forward(self, Z, gamma, beta, epsilon=1e-8):
-        # Calculate the mean and variance for Z
-        mu = np.mean(Z, axis=1, keepdims=True)
-        variance = np.var(Z, axis=1, keepdims=True)
+    def _batchnorm_forward(self, Z, gamma, beta, l, mode='train', momentum=0.9):
+        if mode == "train":
+
+            # Calculate the mean and variance for Z of the current mini-batch
+            mu = np.mean(Z, axis=1, keepdims=True)
+            var = np.var(Z, axis=1, keepdims=True)
+
+            self.running_mu[f"mean{l}"] = momentum * self.running_mu[f"mean{l}"] + (1 - momentum) * mu
+            self.running_var[f"var{l}"] = momentum * self.running_var[f"var{l}"] + (1 - momentum) * var
+
+        elif mode == "test":
+            mu = self.running_mu[f"mean{l}"]
+            var = self.running_var[f"var{l}"]
+
+        # Small value for numerical stability.
+        epsilon = 1e-8
 
         # Normalize Z
-        inv_std = 1 / np.sqrt(variance + epsilon)
+        inv_std = 1 / np.sqrt(var + epsilon)
         Z_norm = (Z - mu) * inv_std
 
         # Apply scaling and shifting
@@ -107,13 +131,13 @@ class NeuralNetOptimized:
         return Z_tilde, cache
 
     # Define the activation portion of forward propagation.
-    def _activation_forward(self, A_prev, W, gamma, beta, activation):
+    def _activation_forward(self, A_prev, W, gamma, beta, activation, l, mode="train",):
 
         # Perform linear step
         Z, linear_cache = self._linear_forward(A_prev, W)
 
         # Standardize the result
-        Z_tilde, batch_norm_cache = self._batchnorm_forward(Z, gamma, beta)
+        Z_tilde, batch_norm_cache = self._batchnorm_forward(Z, gamma, beta, l, mode)
 
         # return activation of Z_tilde and return the original value of Z_tilde
         if activation == "sigmoid":
@@ -126,7 +150,7 @@ class NeuralNetOptimized:
         return A, cache
 
     # Perform forward propagation
-    def forward_propagation(self, X):
+    def forward_propagation(self, X, mode='train'):
         L = len(self.parameters) // 3         # Extract number of layers.
         A_prev = X                       # Initial activations are the inputs
         caches = []                      # Need to collect caches of all layers. caches[0] is ((A_prev, W, b), Z)
@@ -136,7 +160,9 @@ class NeuralNetOptimized:
                                                      self.parameters[f"W{l}"],
                                                      self.parameters[f"gamma{l}"],
                                                      self.parameters[f"beta{l}"],
-                                                     activation="relu")
+                                                     activation="relu",
+                                                     l=l,
+                                                     mode=mode)
 
             caches.append(cache)         # Appends ((A_prev, W, b), Z) for each layer except the last.
 
@@ -145,13 +171,15 @@ class NeuralNetOptimized:
                                                   self.parameters[f"W{L}"],
                                                   self.parameters[f"gamma{L}"],
                                                   self.parameters[f"beta{L}"],
-                                                  activation="sigmoid")
+                                                  activation="sigmoid",
+                                                  l=L,
+                                                  mode=mode)
         caches.append(final_cache)
 
         return AL, caches   # Returns the predictions, AL,  and ((A_prev, W, b), Z) for all layers.
 
     # Function for implementing the forward pass using inverted dropout.
-    def forward_propagation_with_dropout(self, X, keep_prob=0.5):
+    def forward_propagation_with_dropout(self, X, keep_prob=0.5, mode="train"):
         L = len(self.parameters) // 3
         caches = []
         A_prev = X
@@ -161,12 +189,14 @@ class NeuralNetOptimized:
             beta = self.parameters[f"beta{l}"]
             gamma = self.parameters[f"gamma{l}"]
 
-            A_prev, cache_activation = self._activation_forward(A_prev, W, gamma, beta, "relu")
+            A_prev, cache_activation = self._activation_forward(A_prev, W, gamma, beta, "relu", l=l, mode=mode)
 
             # Implement inverted dropout
-            D_mask = np.random.rand(A_prev.shape[0], A_prev.shape[1]) < keep_prob # Create mask
-            A_prev *= D_mask    # Apply the mask to A
-            A_prev /= keep_prob # Scale non-dropped neurons to maintain expected output value.
+            D_mask=None
+            if mode == "train":
+                D_mask = np.random.rand(A_prev.shape[0], A_prev.shape[1]) < keep_prob # Create mask
+                A_prev *= D_mask    # Apply the mask to A
+                A_prev /= keep_prob # Scale non-dropped neurons to maintain expected output value.
 
             # Store in cache for back prop
             cache = (cache_activation, D_mask)
@@ -177,7 +207,7 @@ class NeuralNetOptimized:
         gamma = self.parameters[f"gamma{L}"]
         beta = self.parameters[f"beta{L}"]
 
-        AL, final_cache = self._activation_forward(A_prev, W, gamma, beta, "sigmoid")
+        AL, final_cache = self._activation_forward(A_prev, W, gamma, beta, "sigmoid", l=L, mode=mode)
 
         # Append final cache.
         caches.append((final_cache, None))
@@ -406,7 +436,7 @@ class NeuralNetOptimized:
     # Use to make predictions once model is trained.
     def predict(self, X):
         # Calculate probabilities using trained parameters
-        AL, _ = self.forward_propagation(X)
+        AL, _ = self.forward_propagation(X, mode="test")
 
         # Create boolean mask, then convert to 0's and 1's using * 1
         predictions = (AL > 0.5) * 1
@@ -443,3 +473,48 @@ class NeuralNetOptimized:
         # We start from the last slice and take all rows up to the end of the columns, which would be column m - 1.
 
         return mini_batches
+
+        def neural_network_reg_adam_batch_norm(X, Y, layers_dims, lamda=0, keep_prob=1, beta_1=0.9, beta_2=0.999,
+                                               learning_rate=0.0075, num_epochs=50, print_cost=False, reg=False):
+
+            np.random.seed(1)  # Define np seed for reproducible results
+
+            NN = neural_net_optimized.NeuralNetOptimized(
+                layers_dims)  # Create NN instance, which initializes parameters.
+
+            costs = []  # Collection of costs for plotting
+
+            t = 0
+            # repeat forward prop, back prop, and gradient descent num_iterations times.
+            for i in range(num_epochs):
+                # Create mini_batches out of our X and Y datasets.
+                mini_batches = NN.create_mini_batches(X, Y, mini_batch_size=64)
+                epoch_cost = 0
+
+                # Iterate through each mini_batch
+                for mini_batch in mini_batches:
+                    mini_batch_X, mini_batch_Y = mini_batch
+
+                    t = t + 1
+                    # Extract prediction from forward prop and caches from each layer.
+                    AL, caches = NN.forward_propagation_with_dropout(mini_batch_X, keep_prob)
+
+                    # Use the prediction to compute the cost
+                    cost = NN.compute_cost_reg(AL, mini_batch_Y, lamda)
+
+                    # Perform back prop
+                    grads = NN.backward_propagation_with_dropout(AL, mini_batch_Y, caches, keep_prob, lamda, reg)
+
+                    # Update parameter using gradient descent.
+                    NN.update_parameters_adam(grads, learning_rate, t, beta_1, beta_2)
+
+                    epoch_cost += cost
+
+                # Print cost per 500 iterations if print_cost is true
+                if (i % 100 == 0 or i == num_epochs - 1) and print_cost == True:
+                    avg_cost = epoch_cost / len(mini_batches)
+                    print(f"Cost after epoch {i}: {avg_cost}")
+                    costs.append(avg_cost)
+
+            return costs, NN
+
