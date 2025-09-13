@@ -312,7 +312,8 @@ class NeuralNet:
 
     # Use to make predictions once model is trained.
     def predict(self, X):
-        # Calculate probabilities using trained parameters
+        # Calculate probabilities using trained parameters. We use forward prop here
+        # and not forward prop with dropout at test time since we want to use every neuron.
         AL, _ = self.forward_propagation(X)
 
         # Create boolean mask, then convert to 0's and 1's using * 1
