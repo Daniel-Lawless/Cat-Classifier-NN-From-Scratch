@@ -65,7 +65,7 @@ class NeuralNetOptimized:
         A = 1 / (1 + np.exp(-Z))
         return A, Z
 
-    # Define the derivative of the sigmoid function
+    # Define the back prop step of the sigmoid function
     def _sigmoid_backward(self, dA, activation_cache):
 
         # Extract Z_tilde
@@ -74,7 +74,7 @@ class NeuralNetOptimized:
         # Apply the sigmoid function to Z_tilde
         sig_Z_tilde, _ = self._sigmoid(Z_tilde)
 
-        # Calculate the derivative w.r.t. Z_tilde
+        # Calculate the derivative w.r.t. Z_tilde and multiply it by dA
         dZ = dA * (sig_Z_tilde) * (1 - sig_Z_tilde)
 
         return dZ
@@ -84,7 +84,7 @@ class NeuralNetOptimized:
         A = np.maximum(0, Z)
         return A, Z
 
-    # Define the derivative of the ReLu function
+    # Define the backprop step of the ReLu function
     def _relu_backward(self, dA, activation_cache):
 
         # Extract Z_tilde
