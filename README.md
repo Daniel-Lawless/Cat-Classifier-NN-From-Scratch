@@ -96,9 +96,9 @@ my implementation where $A^{[L]}$ are the final predictions of the model.
 
 ```math
 $$J = \underbrace{-\frac{1}{m}\sum^{m}_{i = 1} \left[ Y^{[i]}log(A^{[L]}) + (1 - Y^{[i]})log(1 - A^{[L]})\right] }_{\text{Cross-entropy loss}} + 
- \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}\| \| W^{[l]}\| \| ^{2}_{f}}_{\text{L2 Regularization}} $$
+ \underbrace{\frac{\lambda}{2m}\sum^{L}_{l = 1}\|W^{[l]}\| ^{2}_{f}}_{\text{L2 Regularization}} $$
 ```
-$$ J = \underbrace{-\frac{1}{m}\sum_{i=1}^{m} \left[ Y^{(i)}\log(A^{[L](i)}) + (1-Y^{(i)})\log(1-A^{[L](i)}) \right] }_{\text{Cross-entropy loss}} + \underbrace{\frac{\lambda}{2m}\sum_{l=1}^{L} \| W^{[l]} \|^2_{f}}_{\text{L2 Regularization}} $$
+$$ J = \underbrace{-\frac{1}{m}\sum_{i=1}^{m} \left[ Y^{(i)}\log(A^{[L](i)}) + (1-Y^{(i)})\log(1-A^{[L](i)}) \right] }_{\text{Cross-entropy loss}} + \underbrace{\frac{\lambda}{2m}\sum_{l=1}^{L} \|W^{[l]}\|^2_{f}}_{\text{L2 Regularization}} $$
 ***
 
 - **Batch-norm:** Batch norm allows the model to modify the distribution of the Z values during 
