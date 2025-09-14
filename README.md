@@ -11,7 +11,7 @@ I made a series of models, each composing of different optimization algorithms,
 regularization, and training processes to compare how they would perform on my particular
 data.
 
-# Key features implemented
+### Key features implemented
 **L-layer architecture:** The model is generalised to handle any number of layers with any
 number of neurons per layer. It is designed to use the RuLe activation function from the 
 first layer up to layer L - 1, with the sigmoid function being the activation function of 
@@ -32,16 +32,16 @@ which allowed for more efficient training.
 the linear functions (Z values) by giving it the flexibility to control the spread ($\gamma$)
 and the mean ($\beta$) of the z values, allowing for more stable and faster learning.
 
-# Technical overview
-Here is a brief view of how some of the core concepts where implemented. The full
-implementation of these components can be found in `neural_network.py` & 
+### Technical overview
+Here is a brief view of the theory and how some of the core concepts were implemented.
+The full implementation of these components can be found in `neural_network.py` & 
 `neural_net_optimized.py`. 
 
 ***
-**Optimization Algorithms:**
+### Optimization Algorithms:
 
 The Adam optimizer was built by first implementing its inner
-components. Let's work with parameter W.
+components, momentum and RMSprop. Let's work with parameter W.
 
 - **Momentum**: The velocity is the exponentially weighted average of the gradients of W. 
 for parameter W in layer l, $v_{dW^{[l]}}$, is calculated as:
@@ -74,8 +74,11 @@ for numerical stability, to provide the best of both worlds:
 ```math
 W^{[l]} = W^{[l]} - \alpha \frac{v^{\text{corr}}_{dW^{[l]}}}{\sqrt{\rule{0pt}{3ex} S^{\text{corr}}_{dW^{[l]}} + \epsilon}}
 ```
+
+This would also be done for parameters $\beta$ and $\gamma$ in a similar way.
+
 ***
-**Regularization algorithms:** 
+### Regularization algorithms:
 To improve generalization to unseen data, regularization was added.
 
 - **Drop-out:** I implemented drop out by creating a mask D for each hidden layer. This mask was 
@@ -129,12 +132,26 @@ Z^{[l]} - \mu^{[l]} &= W^{[l]}A^{[l -1]} + b^{[l]} - E[W^{[l]}A^{[l -1]}] + b^{[
 $$
 
 Thus cancelling the b term. Now, we only have to update parameters W, $\gamma$, & $\beta$.
-The primary benefit of batch-norm is it helps combat covariate-shift. This describes the
+The primary benefit of batch-norm is to help combat covariate-shift. This describes the
 changing distributions of network activations during training, which can lead to bad
-generalization, batch-norm helps to stabilize these distributions, leading to faster,
+generalization, batch-norm helps to stabilize these distributions by giving the neural
+network the flexibility to change the mean and spread of the z values, leading to faster,
 more stable training and can have a regularizing effect.
 
+### Key Learnings & Challenges
+In this project I learned how to implement He initialization and why it is important when using
+ReLu as our primary activation function, how to generalize my code to enable and account for deeper
+NNs, how to implement L2 and dropout regularization and how they can help reduce overfitting,
+how to implement Adam optimization and why having a non-fixed learning rate can help improve
+model performance. I have also learned how to implement batch-norm and to create mini-batches
+of the training data to speed up model training and stabilize activation distributions.
 
-# How to Run
+What I could do better next time:
+Currently I am making decisions on which model is better using the test set.
+I should make a new set, the validation/dev set, and use this set to evaluate the performance of the model
+and pick optimal hyperparameters, then at the end, train a model using all the training data and the
+optimal hyperparameters and test it on the test set.
 
-# Key Learnings & Challenges
+Currently, I am using several function calls, i.e., neural_network_reg, neural_network_blueprint, etc. I Could
+refactor these into a single function where the optimizer and regularization used are passed as arguments,
+which would mke my code more reusable and less repetitive.
