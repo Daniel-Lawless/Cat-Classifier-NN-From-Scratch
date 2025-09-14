@@ -11,7 +11,7 @@ I made a series of models, each composing of different optimization algorithms,
 regularization, and training processes to compare how they would perform on my particular
 data.
 
-### Key features implemented
+## Key features implemented
 **L-layer architecture:** The model is generalised to handle any number of layers with any
 number of neurons per layer. It is designed to use the RuLe activation function from the 
 first layer up to layer L - 1, with the sigmoid function being the activation function of 
@@ -32,7 +32,7 @@ which allowed for more efficient training.
 the linear functions (Z values) by giving it the flexibility to control the spread ($\gamma$)
 and the mean ($\beta$) of the z values, allowing for more stable and faster learning.
 
-### Technical overview
+## Technical overview
 Here is a brief view of the theory and how some of the core concepts were implemented.
 The full implementation of these components can be found in `neural_network.py` & 
 `neural_net_optimized.py`. 
@@ -138,7 +138,7 @@ generalization, batch-norm helps to stabilize these distributions by giving the 
 network the flexibility to change the mean and spread of the z values, leading to faster,
 more stable training and can have a regularizing effect.
 
-### Key Learnings & Challenges
+## Key Learnings & Challenges
 In this project I learned how to implement He initialization and why it is important when using
 ReLu as our primary activation function, how to generalize my code to enable and account for deeper
 NNs, how to implement L2 and dropout regularization and how they can help reduce overfitting,
