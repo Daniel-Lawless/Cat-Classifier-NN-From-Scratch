@@ -152,6 +152,6 @@ I should make a new set, the validation/dev set, and use this set to evaluate th
 and pick optimal hyperparameters, then at the end, train a model using all the training data and the
 optimal hyperparameters and test it on the test set.
 
-Currently, I am using several function calls, i.e., neural_network_reg, neural_network_blueprint, etc. I Could
+Also, in `cat-vs-non-cat.ipynb` I am using several function calls, i.e., neural_network_reg, neural_network_blueprint, etc. I Could
 refactor these into a single function where the optimizer and regularization used are passed as arguments,
 which would mke my code more reusable and less repetitive.
