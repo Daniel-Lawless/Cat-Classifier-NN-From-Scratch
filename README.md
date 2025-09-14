@@ -13,7 +13,7 @@ data.
 
 ## Key features implemented
 **L-layer architecture:** The model is generalised to handle any number of layers with any
-number of neurons per layer. It is designed to use the RuLe activation function from the 
+number of neurons per layer. It is designed to use the ReLu activation function from the 
 first layer up to layer L - 1, with the sigmoid function being the activation function of 
 the last layer.
 
@@ -21,16 +21,17 @@ the last layer.
 leading to faster learning.
 
 **Regularization techniques:** I incorporated L2 regularization to prevent the weights from
-growing to large and dropout regularization to randomly deactivate neurons to ensure the
-output from one neural doesn't have too much precedence.
+growing too large and dropout regularization to randomly deactivate neurons to allow the network
+to learn more robust and redundant features since no single neuron can rely on the presence of 
+another.
 
 **Advanced optimization Techniques:** I incorporated Adam, which combines the affects of momentum
-and RMSprop to push gradients in the right direction and adapt the learning rate for each parameter,
-which allowed for more efficient training.
+and RMSprop to push gradients in the right direction whilst minimizing oscillations by averaging over
+the gradients and adapting the learning rate for each parameter, which allows for more efficient training.
 
 **Batch-normalization:** enables the NN to have direct control over the distribution of
 the linear functions (Z values) by giving it the flexibility to control the spread ($\gamma$)
-and the mean ($\beta$) of the z values, allowing for more stable and faster learning.
+and the mean ($\beta$) of their values, allowing for more stable and faster learning.
 
 ## Technical overview
 Here is a brief view of the theory and how some of the core concepts were implemented.
@@ -88,7 +89,7 @@ to layer l during forward prop is the same mask applied to layer l during back
 prop to ensure the gradients only flow through the active neurons.
 
 - **L2 regularization:** By adding a penalty term to the cost function whose magnitude
-depends on the size of the weights and the value of lambda, this penalises the model if the 
+depends on the size of the weights and the value of lambda, the model is penalised if the 
 weights are too large, thus reducing overfitting. This required an additional term, $\frac{\lambda}{m} W$, to be added
 when calculating the derivative of the loss w.r.t. W, $\frac{dL}{dW}$, during back propagation. The following cost function was used in
 my implementation where $A^{[L]}$ are the final predictions of the model.
