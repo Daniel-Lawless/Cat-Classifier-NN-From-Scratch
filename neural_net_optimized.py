@@ -86,11 +86,14 @@ class NeuralNetOptimized:
 
     # Define the derivative of the ReLu function
     def _relu_backward(self, dA, activation_cache):
+
+        # Extract Z_tilde
         Z_tilde = activation_cache
 
+        # Start with upstream gradient.
         dZ = np.array(dA, copy=True)
 
-        # When Z is less than 0, the gradient is 0.
+        # When Z is less than 0, the gradient is 0. otherwise it's dA
         dZ[Z_tilde <= 0] = 0
 
         return dZ
